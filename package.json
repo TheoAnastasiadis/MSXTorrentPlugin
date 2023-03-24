@@ -1,0 +1,30 @@
+{
+  "name": "msxtorrentplugin",
+  "version": "1.0.0",
+  "description": "MSX plugin to play torrent videos",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack",
+    "serve": "webpack && http-server ./dist"
+  },
+  "keywords": [
+    "torremt",
+    "MSX",
+    "smartTV",
+    "webTorrent"
+  ],
+  "author": "Teo Anastasiadis <theoanastasiadis98@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.21.3",
+    "@babel/preset-env": "^7.20.2",
+    "babel-loader": "^9.1.2",
+    "http-server": "^14.1.1",
+    "webpack": "^5.76.3",
+    "webpack-cli": "^5.0.1"
+  },
+  "dependencies": {
+    "lodash": "^4.17.21"
+  }
+}
