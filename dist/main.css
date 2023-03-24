@@ -1,0 +1,10 @@
+body {
+    margin: 0;
+    background-color: black;
+}
+
+#video {
+    width: 100vw;
+    max-height: 100vh;
+    max-width: 100wh;
+}

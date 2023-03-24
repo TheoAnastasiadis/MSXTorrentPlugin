@@ -23,7 +23,10 @@
     "@babel/preset-env": "^7.20.2",
     "babel-loader": "^9.1.2",
     "copy-webpack-plugin": "^11.0.0",
+    "css-loader": "^6.7.3",
     "http-server": "^14.1.1",
+    "mini-css-extract-plugin": "^2.7.5",
+    "style-loader": "^3.3.2",
     "webpack": "^5.76.3",
     "webpack-cli": "^5.0.1",
     "workbox-webpack-plugin": "^6.5.4"

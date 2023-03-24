@@ -12,7 +12,6 @@ export default (video, magnetLink, fileIdx) => {
 
     client.add(magnetLink, async function(torrent) {
         await sw
-        video.controls = true
         video.src = `${scope}webtorrent/${torrent.infoHash}/${encodeURI(torrent.files[fileIdx].path)}`//specified scope in source and encoded uri of filepath to fix some weird filenames
     })
 
