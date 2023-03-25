@@ -1,7 +1,7 @@
-import rangeParser from "range-parser"
-
 //Code heavilly borrowed from webtorrent-server-browser
 //https://github.com/jimmywarting/webtorrent-server-browser.git
+
+import rangeParser from "range-parser"
 
 export default (video, magnetLink, fileIdx) => {
 
