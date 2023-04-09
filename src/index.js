@@ -1,15 +1,77 @@
-import _ from 'lodash';
-// import playTorrent from './scripts/torrent.js'
-import { TorrServer } from './scripts/torrServer.js';
+import TorrentPlayer from "./scripts/torrent.js";
+// import { TorrServer } from './scripts/torrServer.js';
 
+// const server = new TorrServer()
+// server.detectUrl().then(() => {
+//     console.log(`Server found at ${server.url} [V: ${server.version}]`)
+// })
+const PROPERTY_PREFIX = "torrent:"
 
-const server = new TorrServer()
-server.detectUrl().then(() => {
-    console.log(`Server found at ${server.url} [V: ${server.version}]`)
-})
+function playTorrentLocaly (torrent, fileIdx) {
+    console.log(`Local player: (${torrent}, ${fileIdx})`)
+    const player = new TorrentPlayer(torrent, fileIdx)
+    player.streamTorrent()
+}
 
-    // const sintel = 'magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F'
+class MyPlayer {
+    constructor() {
+        this.init = () => {
+            //placeholder
+        }
+        this.ready = () => {
+            //Player is ready
+            TVXVideoPlugin.requestData("video:info", (data) => {
+                const info = data?.video?.info
+                //we first try to find torrent id (infoHash, magnet etc) and file id from the properties object, then from the url
+                const torrent = TVXPropertyTools.getFullStr(info, PROPERTY_PREFIX+'id', null) || 
+                                (new TVXUrlParams(window.location.href)).getFullStr('torrent', null) 
 
-    // const video = document.getElementById('video')
+                const fileIdx = TVXPropertyTools.getNum(info, PROPERTY_PREFIX+'fileIdx', null) || 
+                                (new TVXUrlParams(window.location.href)).getNum('fileIdx', 0)
 
-    // playTorrent(video, sintel, 5)
+                if (!torrent) {
+                    TVXVideoPlugin.error('Error: No torrent id (infoHash, magnerURI or .torrent file) specified.')
+                    return
+                }
+
+                const torrServerPreferable = TVXPropertyTools.getBool(info, PROPERTY_PREFIX+'server:precedence', false)
+                const clientCompatible = TorrentPlayer.IS_CLIENT_COMPATIBLE()
+                if (clientCompatible && !torrServerPreferable) {
+                    playTorrentLocaly(torrent, fileIdx)
+                    
+                } else {
+                   //playTorrentFromServer(torrent, fileIdx)
+                   TVXVideoPlugin.error('Your system does not support WebTorrent. Will try to use TorrServer as fallback...')
+                }
+            })
+            TVXVideoPlugin.startPlayback(); //This will call the play function and will start the update process
+        }
+        this.play = () => {
+            document.getElementById("video")?.play() //It will try to play before the element is created. 
+        }
+        this.pause = () => {
+            document.getElementById("video").pause()
+        }
+        this.stop = () => {
+            document.getElementById("video").pause()
+            TVXVideoPlugin.stopPlayback()
+        }
+        this.getDuration = () =>(document.getElementById("video").duration)
+        this.getPosition = () =>(document.getElementById("video").currentTime)
+        this.setPosition = (position) => {document.getElementById("video").currentTime = position}
+        this.setMuted = () =>{document.getElementById("video").muted = true}
+        this.isMuted = () => (document.getElementById("video").muted)
+        this.getSpeed = () => (document.getElementById("video").playbackRate)
+        this.setSpeed = (speed) => {document.getElementById("video").playbackRate = speed}
+        this.getUpdateData = () => ({
+                position: this.getPosition(),
+                duration: this.getDuration(),
+                speed: this.getSpeed()
+            })
+    }
+}
+
+TVXPluginTools.onReady(function() {
+    TVXVideoPlugin.setupPlayer(new MyPlayer());
+    TVXVideoPlugin.init();
+});
