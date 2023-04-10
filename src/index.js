@@ -1,5 +1,5 @@
-import TorrentPlayer from "./scripts/torrent.js"
-// import { TorrServer } from './scripts/torrServer.js';
+import { TorrentPlayer as LocalPlayer } from "./scripts/torrent.js"
+import { TorrServer as RemotePlayer } from "./scripts/torrServer.js"
 
 // const server = new TorrServer()
 // server.detectUrl().then(() => {
@@ -7,73 +7,138 @@ import TorrentPlayer from "./scripts/torrent.js"
 // })
 const PROPERTY_PREFIX = "torrent:"
 
-function playTorrentLocaly (torrent, fileIdx) {
-    console.log(`Local player: (${torrent}, ${fileIdx})`)
-    const player = new TorrentPlayer(torrent, fileIdx)
-    player.streamTorrent()
+const error = (message, cb) => {
+    console.log(message)
+    TVXVideoPlugin.error(message)
+    cb()
+}
+
+const parseInfo = (info) => {
+    //we first try to find torrent id (infoHash, magnet etc) and file id from the properties object, then from the url
+    const torrent =
+        TVXPropertyTools.getFullStr(info, PROPERTY_PREFIX + "id", null) ||
+        new TVXUrlParams(window.location.href).getFullStr("torrent", null)
+    console.log("torrent", torrent)
+    const fileIdx =
+        TVXPropertyTools.getNum(info, PROPERTY_PREFIX + "fileIdx", null) ||
+        new TVXUrlParams(window.location.href).getNum("fileIdx", 0)
+    console.log("file", fileIdx)
+    if (!torrent) {
+        error(
+            "Error: No torrent id (infoHash, magnerURI or .torrent file) specified.",
+            () => {
+                throw "No torrent id"
+            }
+        )
+    }
+
+    return [torrent, fileIdx]
 }
 
 class Player {
     constructor() {
-        this.player = document.getElementById("video")
+        this.videoElement = document.getElementById("video")
+        this.player = null
         this.init = () => {
             //placeholder
         }
         this.ready = () => {
             //Player is ready
+            console.log("init()")
             TVXVideoPlugin.requestData("video:info", (data) => {
+                console.log("TVX.requestData()")
                 const info = data?.video?.info
-                //we first try to find torrent id (infoHash, magnet etc) and file id from the properties object, then from the url
-                const torrent = TVXPropertyTools.getFullStr(info, PROPERTY_PREFIX+'id', null) || 
-                                (new TVXUrlParams(window.location.href)).getFullStr('torrent', null) 
+                console.dir(info)
+                const [torrent, fileIdx] = parseInfo(info)
+                console.log(torrent, fileIdx)
+                const torrServerPreferable = TVXPropertyTools.getBool(
+                    info,
+                    PROPERTY_PREFIX + "server:precedence",
+                    false
+                )
+                console.log(1)
+                const clientCompatible = LocalPlayer.IS_CLIENT_COMPATIBLE()
+                console.log(2)
 
-                const fileIdx = TVXPropertyTools.getNum(info, PROPERTY_PREFIX+'fileIdx', null) || 
-                                (new TVXUrlParams(window.location.href)).getNum('fileIdx', 0)
+                console.log("parsed info")
+                const playLocaly = () => {
+                    console.log("Setting local player")
+                    this.player = new LocalPlayer(torrent, fileIdx)
+                    this.player.streamTorrent(this.videoElement)
+                }
 
-                if (!torrent) {
-                    TVXVideoPlugin.error('Error: No torrent id (infoHash, magnerURI or .torrent file) specified.')
-                    return
+                const playRemotely = async () => {
+                    console.log("Setting remote player")
+                    const serverLocation = TVXPropertyTools.getFullStr(
+                        info,
+                        PROPERTY_PREFIX + "server:location",
+                        "auto"
+                    )
+                    if (serverLocation != "auto") {
+                        this.player = new RemotePlayer(serverLocation)
+                    } else {
+                        this.player = new RemotePlayer()
+                        this.player.detectUrl() //If no ip address is provided by the user
+                    }
+                    try {
+                        await this.player.init()
+                        this.player.streamTorrent(
+                            torrent,
+                            fileIdx,
+                            this.videoElement
+                        )
+                    } catch (e) {
+                        //display the appropriate message
+                        error(
+                            serverLocation == "auto"
+                                ? "No server was found in this network"
+                                : "No server was found at the specified IP",
+                            () => {
+                                console.error(e)
+                            }
+                        )
+                    }
                 }
-                const torrServerPreferable = TVXPropertyTools.getBool(info, PROPERTY_PREFIX+'server:precedence', false)
-                const clientCompatible = TorrentPlayer.IS_CLIENT_COMPATIBLE()
-                if (clientCompatible && !torrServerPreferable) {
-                    playTorrentLocaly(torrent, fileIdx)
-                    
-                } else if (torrServerPreferable) {
-                    //playTorrentFromServer(torrent, fileIdx)
-                }
-                else {
-                   TVXVideoPlugin.error('Your system does not support WebTorrent. Will try to use TorrServer as fallback...')
-                }
+
+                if (torrServerPreferable) playRemotely()
+                else if (clientCompatible) playLocaly()
+                else
+                    error(
+                        "Your system does not support WebTorrent. Will try to find a  TorrServer as fallback...",
+                        playRemotely
+                    )
             })
             TVXVideoPlugin.startPlayback()
         }
-        this.play = () => {
-            this.player.play()
-        }
-        this.pause = () => {
-            this.player.pause()
-        }
+        this.play = this.videoElement.play
+        this.pause = this.videoElement.pause
         this.stop = () => {
-            this.player.pause()
+            this.videoElement.pause()
             TVXVideoPlugin.stopPlayback()
+            //this.player.destroy()
         }
-        this.getDuration = () =>(this.player.duration)
-        this.getPosition = () =>(this.player.currentTime)
-        this.setPosition = (position) => {this.player.currentTime = position}
-        this.setMuted = () =>{this.player.muted = true}
-        this.isMuted = () => (this.player.muted)
-        this.getSpeed = () => (this.player.playbackRate)
-        this.setSpeed = (speed) => {this.player.playbackRate = speed}
+        this.getDuration = () => this.videoElement.duration
+        this.getPosition = () => this.videoElement.currentTime
+        this.getSpeed = () => this.videoElement.playbackRate
+        this.setSpeed = (speed) => {
+            this.videoElement.playbackRate = speed
+        }
+        this.setPosition = (position) => {
+            this.videoElement.currentTime = position
+        }
+        this.isMuted = () => this.videoElement.muted
+        this.setMuted = () => {
+            this.videoElement.muted = true
+        }
         this.getUpdateData = () => ({
-                position: this.getPosition(),
-                duration: this.getDuration(),
-                speed: this.getSpeed()
-            })
+            position: this.getPosition(),
+            duration: this.getDuration(),
+            speed: this.getSpeed(),
+        })
     }
 }
 
-TVXPluginTools.onReady(function() {
+TVXPluginTools.onReady(function () {
     TVXVideoPlugin.setupPlayer(new Player())
     TVXVideoPlugin.init()
 })
