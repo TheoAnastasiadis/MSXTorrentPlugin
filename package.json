@@ -9,11 +9,11 @@
     "build": "webpack",
     "auto-build": "nodemon -w ./src --exec \"npm run build\"",
     "serve": "http-server ./dist -p 8080 --cors -S -C cert.pem",
-    "auto-serve":"nodemon -w ./dist --exec \"npm run serve\"",
+    "auto-serve": "nodemon -w ./dist --exec \"npm run serve\"",
     "dev-server": "npm run auto-build & npm run auto-serve"
   },
   "keywords": [
-    "torremt",
+    "torrent",
     "MSX",
     "smartTV",
     "webTorrent"
@@ -37,6 +37,6 @@
     "lodash": "^4.17.21",
     "range-parser": "^1.2.1",
     "service-worker-webpack": "^0.0.11",
-    "webtorrent": "^2.0.15"
+    "webtorrent": "^2.0.16"
   }
 }

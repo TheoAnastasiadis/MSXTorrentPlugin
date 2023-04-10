@@ -1,4 +1,4 @@
-import TorrentPlayer from "./scripts/torrent.js";
+import TorrentPlayer from "./scripts/torrent.js"
 // import { TorrServer } from './scripts/torrServer.js';
 
 // const server = new TorrServer()
@@ -13,8 +13,9 @@ function playTorrentLocaly (torrent, fileIdx) {
     player.streamTorrent()
 }
 
-class MyPlayer {
+class Player {
     constructor() {
+        this.player = document.getElementById("video")
         this.init = () => {
             //placeholder
         }
@@ -33,36 +34,37 @@ class MyPlayer {
                     TVXVideoPlugin.error('Error: No torrent id (infoHash, magnerURI or .torrent file) specified.')
                     return
                 }
-
                 const torrServerPreferable = TVXPropertyTools.getBool(info, PROPERTY_PREFIX+'server:precedence', false)
                 const clientCompatible = TorrentPlayer.IS_CLIENT_COMPATIBLE()
                 if (clientCompatible && !torrServerPreferable) {
                     playTorrentLocaly(torrent, fileIdx)
                     
-                } else {
-                   //playTorrentFromServer(torrent, fileIdx)
+                } else if (torrServerPreferable) {
+                    //playTorrentFromServer(torrent, fileIdx)
+                }
+                else {
                    TVXVideoPlugin.error('Your system does not support WebTorrent. Will try to use TorrServer as fallback...')
                 }
             })
-            TVXVideoPlugin.startPlayback(); //This will call the play function and will start the update process
+            TVXVideoPlugin.startPlayback()
         }
         this.play = () => {
-            document.getElementById("video")?.play() //It will try to play before the element is created. 
+            this.player.play()
         }
         this.pause = () => {
-            document.getElementById("video").pause()
+            this.player.pause()
         }
         this.stop = () => {
-            document.getElementById("video").pause()
+            this.player.pause()
             TVXVideoPlugin.stopPlayback()
         }
-        this.getDuration = () =>(document.getElementById("video").duration)
-        this.getPosition = () =>(document.getElementById("video").currentTime)
-        this.setPosition = (position) => {document.getElementById("video").currentTime = position}
-        this.setMuted = () =>{document.getElementById("video").muted = true}
-        this.isMuted = () => (document.getElementById("video").muted)
-        this.getSpeed = () => (document.getElementById("video").playbackRate)
-        this.setSpeed = (speed) => {document.getElementById("video").playbackRate = speed}
+        this.getDuration = () =>(this.player.duration)
+        this.getPosition = () =>(this.player.currentTime)
+        this.setPosition = (position) => {this.player.currentTime = position}
+        this.setMuted = () =>{this.player.muted = true}
+        this.isMuted = () => (this.player.muted)
+        this.getSpeed = () => (this.player.playbackRate)
+        this.setSpeed = (speed) => {this.player.playbackRate = speed}
         this.getUpdateData = () => ({
                 position: this.getPosition(),
                 duration: this.getDuration(),
@@ -72,6 +74,6 @@ class MyPlayer {
 }
 
 TVXPluginTools.onReady(function() {
-    TVXVideoPlugin.setupPlayer(new MyPlayer());
-    TVXVideoPlugin.init();
-});
+    TVXVideoPlugin.setupPlayer(new Player())
+    TVXVideoPlugin.init()
+})

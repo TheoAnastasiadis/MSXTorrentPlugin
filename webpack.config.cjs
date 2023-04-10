@@ -22,8 +22,8 @@ module.exports = {
   plugins: [
     new CopyPlugin({
       patterns: [
-        "src/sw.js",
-        "src/styles/main.css"
+        "src/scripts/sw.js",
+        "src/styles/main.css",
       ],
     })
   ],
