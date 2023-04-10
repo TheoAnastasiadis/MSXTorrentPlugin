@@ -8,7 +8,6 @@ import { TorrServer as RemotePlayer } from "./scripts/torrServer.js"
 const PROPERTY_PREFIX = "torrent:"
 
 const error = (message, cb) => {
-    console.log(message)
     TVXVideoPlugin.error(message)
     cb()
 }
@@ -18,11 +17,9 @@ const parseInfo = (info) => {
     const torrent =
         TVXPropertyTools.getFullStr(info, PROPERTY_PREFIX + "id", null) ||
         new TVXUrlParams(window.location.href).getFullStr("torrent", null)
-    console.log("torrent", torrent)
     const fileIdx =
         TVXPropertyTools.getNum(info, PROPERTY_PREFIX + "fileIdx", null) ||
         new TVXUrlParams(window.location.href).getNum("fileIdx", 0)
-    console.log("file", fileIdx)
     if (!torrent) {
         error(
             "Error: No torrent id (infoHash, magnerURI or .torrent file) specified.",
@@ -44,25 +41,16 @@ class Player {
         }
         this.ready = () => {
             //Player is ready
-            console.log("init()")
             TVXVideoPlugin.requestData("video:info", (data) => {
-                console.log("TVX.requestData()")
                 const info = data?.video?.info
-                console.dir(info)
                 const [torrent, fileIdx] = parseInfo(info)
-                console.log(torrent, fileIdx)
                 const torrServerPreferable = TVXPropertyTools.getBool(
                     info,
                     PROPERTY_PREFIX + "server:precedence",
                     false
                 )
-                console.log(1)
                 const clientCompatible = LocalPlayer.IS_CLIENT_COMPATIBLE()
-                console.log(2)
-
-                console.log("parsed info")
                 const playLocaly = () => {
-                    console.log("Setting local player")
                     this.player = new LocalPlayer(torrent, fileIdx)
                     this.player.streamTorrent(this.videoElement)
                 }
