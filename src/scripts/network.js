@@ -2,9 +2,9 @@ import throttledMap from "./throttledMap.js"
 
 export class Network {
 
-    responseTimeout = 6000
-    retryTimeout = 2000
-    concurrency = 8
+    responseTimeout = 6000 //Maximum time to wait before deciding an endpoint doesn't exists
+    retryTimeout = 2000 //How often to check if endpoints are pending
+    concurrency = 8 //Number of parallel tries
     MOST_POPULAR_GETAWAYS =  ["192.168.1.1",
                                 "192.168.0.1",
                                 "192.168.2.1",
@@ -134,14 +134,15 @@ export class Network {
     checkAddress = (ip) => {
         const timeout = this.responseTimeout
         return new Promise((resolve, reject) => {
-            const socket = new WebSocket(`wss://${ip}/`)
-            const now = Date.now()
-            setTimeout(() => socket.close(), timeout)
+            const socket = new WebSocket(`wss://${ip}/`) //secure context wark on insecure one as well
+            const start = Date.now()
+            setTimeout(() => socket.close(), timeout) //The WebSocket will either close because of error or because of timeout
             socket.onclose = (event) => {
-                if (Date.now() - now < timeout) {
+                const end = Date.now()
+                if (end - start < timeout) { //If it closes before timeout, it means the server responded with an error => server exists
                     console.log(`Possible local ip: ${ip}`)
                     resolve(ip)
-                } else {
+                } else {//If it closes after timeout, it means it kept trying to connect => no server exists
                     reject(ip)
                 }
             }

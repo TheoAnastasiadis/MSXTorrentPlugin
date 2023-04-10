@@ -16,7 +16,7 @@ export class TorrServer {
     version = null
 
     /**
-     *Async method to automatically detect the location of the server within the network. It is not very efficient at the moment and may need a lot of time to find the ip but will become a lot faster with WebSocket preprocessing (#TODO).
+    *"Automatically" detects the location (ie. IP) of the torrServer within the network.
     *
     * @memberof TorrServer
     */
