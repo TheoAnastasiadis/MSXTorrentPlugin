@@ -7,10 +7,9 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "build": "webpack",
+        "prebuild": "npx prettier --write .",
         "auto-build": "nodemon -w ./src --exec \"npm run build\"",
-        "serve": "http-server ./dist -p 8080 --cors -S -C cert.pem",
-        "auto-serve": "nodemon -w ./dist --exec \"npm run serve\"",
-        "dev-server": "npm run auto-build & npm run auto-serve"
+        "serve": "http-server ./dist -p 8080 --cors -S -C cert.pem"
     },
     "keywords": [
         "torrent",
