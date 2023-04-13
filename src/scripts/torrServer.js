@@ -12,7 +12,7 @@ class TorrServer {
     MAX_CONNECTIONS = 3 //Number of concurrent WebSocket requests over the local network - we shouldn't overburden the browser
     PORT = 8090 //See torrServer's documentation https://github.com/YouROK/TorrServer
 
-    constructor(url = null) {
+    constructor(url = "") {
         this.url = url
         this.version = null
     }
@@ -22,19 +22,26 @@ class TorrServer {
      * @param {boolean} [retryUponError=true] If *NO* server response is recieved from the users pecified IP, server.detectUrl() will be called.
      * @memberof TorrServer
      */
-    init = async (retryUponError = true) => {
-        const response = await fetch(`http://${this.url}:${this.PORT}/echo`)
-        this.version = await response.text()
-
-        if (!this.version.match(/MatriX\.\d{1,3}/)) {
-            if (retryUponError) {
-                await this.detectUrl()
-                if (!this.version.match(/MatriX\.\d{1,3}/))
-                    throw "No server in network" //Still no server found in the network
-            } else throw "No server at IP"
+    init = async (autoDetectOnError = true) => {
+        if (this.url) {
+            try {
+                const response = await fetch(
+                    `http://${this.url}:${this.PORT}/echo`
+                )
+                this.version = (await response.text()).match(
+                    /MatriX\.\d{1,3}/
+                )[0]
+            } catch (error) {
+                console.warn(`No server at ${this.url}}`) //we don't throw immediately
+            }
         }
 
-        console.log(`Server ready at '${this.url}'`)
+        if (this.version) console.log(`Server ready at '${this.url}'`)
+        else if (autoDetectOnError) {
+            await this.detectUrl()
+            if (!this.version) throw "No server in network"
+            console.log(`Server ready at '${this.url}'`)
+        } else throw `No server at ${this.url}}` //
     }
 
     /**
@@ -71,13 +78,27 @@ class TorrServer {
     }
 
     streamTorrent = async (torrentId, fileIdx, element) => {
-        const data = { link: torrentId, index: fileIdx, m3u: true }
-        const response = await fetch(
-            `http://${this.url}:${this.PORT}/stream?${new URLSearchParams(
-                data
-            )}`
-        )
-        console.log(await response.text())
+        const data = { link: torrentId, index: fileIdx, play: true }
+        element.src = `http://${this.url}:${
+            this.PORT
+        }/stream?${new URLSearchParams(data)}`
+
+        //subtitles
+        const response = await (
+            await fetch(
+                `http://${this.url}:${this.PORT}/stream?${new URLSearchParams({
+                    ...data,
+                    m3u: true,
+                })}`
+            )
+        ).text()
+        const openingtag = "#EXTVLCOPT:input-slave="
+        const subtitles = response
+            .substring(response.indexOf(openingtag) + openingtag.length)
+            .split("#")
+            .map((s) => s.trim())
+            .filter((s) => s.match(/(?:\.srt)|(?:\.vtt)/))
+        console.log(subtitles)
     }
 }
 

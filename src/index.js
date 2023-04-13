@@ -62,12 +62,9 @@ class Player {
                         PROPERTY_PREFIX + "server:location",
                         "auto"
                     )
-                    if (serverLocation != "auto") {
-                        this.player = new RemotePlayer(serverLocation)
-                    } else {
-                        this.player = new RemotePlayer()
-                        this.player.detectUrl() //If no ip address is provided by the user
-                    }
+                    this.player = new RemotePlayer(
+                        serverLocation != "auto" ? serverLocation : null
+                    )
                     try {
                         await this.player.init()
                         this.player.streamTorrent(
@@ -98,8 +95,8 @@ class Player {
             })
             TVXVideoPlugin.startPlayback()
         }
-        this.play = this.videoElement.play
-        this.pause = this.videoElement.pause
+        this.play = () => this.videoElement.play()
+        this.pause = () => this.videoElement.pause()
         this.stop = () => {
             this.videoElement.pause()
             TVXVideoPlugin.stopPlayback()
