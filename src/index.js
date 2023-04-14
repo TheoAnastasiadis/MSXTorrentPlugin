@@ -1,96 +1,134 @@
 import { TorrentPlayer as LocalPlayer } from "./scripts/torrent.js"
 import { TorrServer as RemotePlayer } from "./scripts/torrServer.js"
+import { optionsPanel, updateInput } from "./scripts/optionsPanel.js"
 
-// const server = new TorrServer()
-// server.detectUrl().then(() => {
-//     console.log(`Server found at ${server.url} [V: ${server.version}]`)
-// })
 const PROPERTY_PREFIX = "torrent:"
 
 const error = (message, cb) => {
     TVXVideoPlugin.error(message)
-    cb()
+    cb && cb()
 }
 
-const parseInfo = (info) => {
-    //we first try to find torrent id (infoHash, magnet etc) and file id from the properties object, then from the url
-    const torrent =
-        TVXPropertyTools.getFullStr(info, PROPERTY_PREFIX + "id", null) ||
-        new TVXUrlParams(window.location.href).getFullStr("torrent", null)
-    const fileIdx =
-        TVXPropertyTools.getNum(info, PROPERTY_PREFIX + "fileIdx", null) ||
-        new TVXUrlParams(window.location.href).getNum("fileIdx", 0)
-    if (!torrent) {
-        error(
-            "Error: No torrent id (infoHash, magnerURI or .torrent file) specified.",
-            () => {
-                throw "No torrent id"
-            }
-        )
-    }
+const success = (message, cb) => {
+    TVXVideoPlugin.success(message)
+    cb && cb()
+}
 
-    return [torrent, fileIdx]
+const warning = (message, cb) => {
+    TVXVideoPlugin.warn(message)
+    cb && cb()
 }
 
 class Player {
     constructor() {
         this.videoElement = document.getElementById("video")
-        this.player = null
-        this.init = () => {
-            //placeholder
+        ;(this.torrServerLocation = null),
+            (this.serverLocationInput = ""),
+            (this.torrentId = null),
+            (this.fileIdx = 0),
+            (this.player = null),
+            (this.init = () => {
+                //placeholder
+            })
+        this.playLocaly = () => {
+            this.player = new LocalPlayer(this.torrentId, this.fileIdx)
+            this.player.streamTorrent(this.videoElement)
+        }
+        this.playRemotely = async () => {
+            console.log("Setting remote player")
+
+            this.player = new RemotePlayer(
+                this.serverLocation == "auto" ? null : this.serverLocation
+            )
+
+            if (this.serverLocation == "auto") {
+                warning(
+                    "No server ip was supplied, the system will attempt to locate one automatically."
+                )
+                TVXVideoPlugin.startLoading()
+            }
+
+            try {
+                await this.player.init()
+                success(
+                    `TorrServer ${
+                        this.serverLocation == "auto" ? "found" : "available"
+                    } at ${this.player.url}`
+                )
+                this.player.streamTorrent(
+                    this.torrentId,
+                    this.fileIdx,
+                    this.videoElement
+                )
+            } catch (e) {
+                //display the appropriate message
+                error(
+                    this.serverLocation == "auto"
+                        ? "No server was found in this network"
+                        : "No server was found at the specified IP",
+                    () => {
+                        console.error(e)
+                    }
+                )
+            }
         }
         this.ready = () => {
             //Player is ready
             TVXVideoPlugin.requestData("video:info", (data) => {
                 const info = data?.video?.info
-                const [torrent, fileIdx] = parseInfo(info)
+                //Content information
+                this.torrentId =
+                    TVXPropertyTools.getFullStr(
+                        info,
+                        PROPERTY_PREFIX + "id",
+                        null
+                    ) ||
+                    new TVXUrlParams(window.location.href).getFullStr(
+                        "torrent",
+                        null
+                    )
+
+                this.fileIdx =
+                    TVXPropertyTools.getNum(
+                        info,
+                        PROPERTY_PREFIX + "fileIdx",
+                        null
+                    ) ||
+                    new TVXUrlParams(window.location.href).getNum("fileIdx", 0)
+
+                if (!this.torrentId) {
+                    error(
+                        "Error: No torrent id (infoHash, magnerURI or .torrent file) specified.",
+                        () => {
+                            throw "No torrent id"
+                        }
+                    )
+                }
+
+                //Local webtorrent setup
                 const torrServerPreferable = TVXPropertyTools.getBool(
                     info,
                     PROPERTY_PREFIX + "server:precedence",
                     false
                 )
                 const clientCompatible = LocalPlayer.IS_CLIENT_COMPATIBLE()
-                const playLocaly = () => {
-                    this.player = new LocalPlayer(torrent, fileIdx)
-                    this.player.streamTorrent(this.videoElement)
-                }
 
-                const playRemotely = async () => {
-                    console.log("Setting remote player")
-                    const serverLocation = TVXPropertyTools.getFullStr(
-                        info,
-                        PROPERTY_PREFIX + "server:location",
-                        "auto"
-                    )
-                    this.player = new RemotePlayer(
-                        serverLocation != "auto" ? serverLocation : null
-                    )
-                    try {
-                        await this.player.init()
-                        this.player.streamTorrent(
-                            torrent,
-                            fileIdx,
-                            this.videoElement
-                        )
-                    } catch (e) {
-                        //display the appropriate message
-                        error(
-                            serverLocation == "auto"
-                                ? "No server was found in this network"
-                                : "No server was found at the specified IP",
-                            () => {
-                                console.error(e)
-                            }
-                        )
-                    }
-                }
+                //Remote TorrServer setup
+                const serverLocation = TVXPropertyTools.getFullStr(
+                    info,
+                    PROPERTY_PREFIX + "server:location",
+                    "auto"
+                )
+                this.serverLocation = serverLocation
+                this.serverLocationInput = serverLocation
 
-                if (torrServerPreferable) playRemotely()
-                else if (clientCompatible) playLocaly()
+                //Play torrent
+                if (torrServerPreferable) this.playRemotely()
+                else if (clientCompatible) this.playLocaly()
                 else
                     error(
-                        "Your system does not support WebTorrent. Will try to find a  TorrServer as fallback...",
-                        playRemotely
+                        "Your system does not support WebTorrent. Will try to connect to a TorrServer as fallback.",
+                        this.playRemotely
                     )
             })
             TVXVideoPlugin.startPlayback()
@@ -120,6 +158,31 @@ class Player {
             duration: this.getDuration(),
             speed: this.getSpeed(),
         })
+        this.handleEvent = function (data) {
+            //placeholder
+        }
+        this.handleData = (data) => {
+            if (data?.message.indexOf("input:") == 0) {
+                this.serverLocationInput = updateInput(
+                    //update state
+                    this.serverLocationInput,
+                    data.message.substring(6)
+                )
+                TVXVideoPlugin.executeAction(
+                    //update view
+                    "update:panel:torrserverlocation",
+                    { label: this.serverLocationInput }
+                )
+            } else if (data?.message == "serverLocationChange") {
+                this.serverLocation = this.serverLocationInput
+                this.playRemotely()
+            }
+        }
+        this.handleRequest = (dataId, data, callback) => {
+            if (dataId == "options")
+                callback(optionsPanel(this.serverLocationInput))
+            //TODO: subtitles
+        }
     }
 }
 

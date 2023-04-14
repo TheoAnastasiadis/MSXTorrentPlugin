@@ -7,15 +7,15 @@
         "icon": "msx-white-soft:extension",
         "color": "msx-glass",        
         "playerLabel": "Sintel © copyright Blender Foundation | durian.blender.org",
-        "action": "video:plugin:http://192.168.1.8:8080?url=http://msx.benzac.de/media/sintel/sintel.mp4",
+        "action": "video:plugin:http://192.168.1.8:8080",
         "properties": {
-            "torrent:id":"dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c",
+            "torrent:id":"{context:torrentId}",
             "torrent:fileIdx":2,
             "torrent:server:precedence":true,
-            "torrent:server:location":"192.168.1.8",
+            "torrent:server:location":"auto",
             "resume:position": "4",
-            "button:content:icon": "{context:contentIcon}",
-            "button:content:action": "{context:contentAction}",
+            "button:content:icon": "subtitles",
+            "button:content:action": "panel:request:player:options",
             "html5x:subtitle:en:English": "http://msx.benzac.de/media/sintel/en.vtt",
             "html5x:subtitle:de:Deutsch": "http://msx.benzac.de/media/sintel/de.vtt",			
             "html5x:subtitle:es:Español": "http://msx.benzac.de/media/sintel/es.vtt",
@@ -30,17 +30,14 @@
     "items": [{     
             "title": "Sintel 1",
             "titleFooter": "Audio & Subtitles",
-            "contentIcon": "settings",
-            "contentAction": "panel:request:player:options"         
+            "torrentId": "dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c"
         }, {         
             "title": "Sintel 2",
             "titleFooter": "Audio only",
-            "contentIcon": "audiotrack",
-            "contentAction": "panel:request:player:audiotrack"
+            "torrentId": "dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c"
         }, {    
             "title": "Sintel 3",
             "titleFooter": "Subtitles only",
-            "contentIcon": "subtitles",
-            "contentAction": "panel:request:player:subtitle"
+            "torrentId": "dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c"
         }]
 }
