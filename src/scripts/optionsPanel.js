@@ -18,14 +18,14 @@ const keyboardButton = (key, layout, icon = null, text = null) => ({
     ...(icon && { icon }),
     alignment: "justify",
     centration: "label",
+    iconSize: "small",
 })
 
-const optionsPanel = (serverLocation) => {
-    console.log("optionsPanel()")
+const torrentPanel = (serverLocation) => {
     return {
         cache: false,
         reuse: false,
-        headline: "Options",
+        headline: "Torrent streaming options",
         pages: [
             {
                 items: [
@@ -70,7 +70,7 @@ const optionsPanel = (serverLocation) => {
                         action: `player:commit:message:input:auto`,
                         type: "control",
                         layout: "4,4,2,1",
-                        icon: "devices",
+                        icon: "auto-awesome",
                     },
                     {
                         id: "submit",
@@ -78,8 +78,14 @@ const optionsPanel = (serverLocation) => {
                         action: `player:commit:message:serverLocationChange`,
                         type: "control",
                         layout: "6,4,2,1",
-                        icon: "network-check",
+                        icon: "check-circle-outline",
                     },
+                    infoText(
+                        "warning",
+                        "",
+                        '{txt:msx-yellow:Warning:} The "auto" option is an experimental feature that will try to locate a TorrServer instance within your local network. It might not always be possible to discover your server.',
+                        "0,5,8,1"
+                    ),
                 ],
             },
         ],
@@ -88,11 +94,86 @@ const optionsPanel = (serverLocation) => {
 
 const updateInput = (input, key) => {
     if (key in ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"])
-        return input + key
-    else if (key == "delete") return input.substring(0, input.length - 1)
-    else if (key == "period") return input + "."
+        return input == "auto" ? key : input + key
+    else if (key == "delete")
+        return input == "auto" ? "" : input.substring(0, input.length - 1)
+    //"auto" should be deleted completely on backspace
+    else if (key == "period") return input == "auto" ? "." : input + "."
     else if (key == "auto") return "auto"
     else return input //remain unchanged
 }
 
-export { optionsPanel, updateInput }
+const optionsPanel = () => {
+    return {
+        cache: false,
+        reuse: false,
+        headline: "Options",
+        pages: [
+            {
+                items: [
+                    {
+                        id: "title1",
+                        title: "Content Options",
+                        titleFooter:
+                            "Select subtitle track and edit cue timing",
+                        type: "space",
+                        layout: "0,0,8,1",
+                    },
+                    {
+                        id: "subtitles",
+                        headline: "Subtitle Track",
+                        text: "Select subtitle track",
+                        action: `panel:request:player:subtitles`,
+                        type: "control",
+                        layout: "0,1,8,1",
+                        extensionIcon: "subtitles",
+                    },
+                    {
+                        id: "plus",
+                        label: "100ms",
+                        action: "player:commit:message:timing:plus",
+                        key: "forward",
+                        type: "control",
+                        layout: "0,2,4,1",
+                        icon: "add",
+                    },
+                    {
+                        id: "minus",
+                        label: " 100ms",
+                        action: "player:commit:message:timing:minus",
+                        key: "rewind",
+                        type: "control",
+                        layout: "4,2,4,1",
+                        icon: "remove",
+                    },
+                    {
+                        id: "tip",
+                        text: "{txt:msx-green:Tip:} Use {ico:fast-forward} to delay or {ico:fast-rewind} to hasten subtitles while this panel is open (step {chr:plusmn}100ms)",
+                        action: `panel:request:player:torrent`,
+                        type: "space",
+                        layout: "0,3,8,1",
+                    },
+                    {
+                        id: "title2",
+                        title: "Player Options",
+                        titleFooter:
+                            "Select how you want to stream torrent files",
+                        type: "space",
+                        layout: "0,4,8,1",
+                    },
+                    {
+                        id: "torrent",
+                        headline: "Torrent",
+                        text: "Configure how torrents should be streamed.",
+                        action: `panel:request:player:torrent`,
+                        type: "control",
+                        layout: "0,5,8,1",
+                        extensionIcon: "account-tree",
+                    },
+                ],
+            },
+        ],
+    }
+}
+
+export { torrentPanel, updateInput, optionsPanel }

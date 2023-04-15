@@ -32,7 +32,7 @@ class TorrServer {
                     /MatriX\.\d{1,3}/
                 )[0]
             } catch (error) {
-                console.warn(`No server at ${this.url}}`) //we don't throw immediately
+                console.warn(`No server at ${this.url}`) //we don't throw immediately
             }
         }
 
@@ -82,7 +82,7 @@ class TorrServer {
         element.src = `http://${this.url}:${
             this.PORT
         }/stream?${new URLSearchParams(data)}`
-
+        console.log(element.src)
         //subtitles
         const response = await (
             await fetch(
@@ -95,10 +95,21 @@ class TorrServer {
         const openingtag = "#EXTVLCOPT:input-slave="
         const subtitles = response
             .substring(response.indexOf(openingtag) + openingtag.length)
-            .split("#")
+            .split("#") //That's how m3u files work
             .map((s) => s.trim())
             .filter((s) => s.match(/(?:\.srt)|(?:\.vtt)/))
-        console.log(subtitles)
+            .map((s) => ({
+                url: s,
+                language: s.match(/(?<lang>[a-z]{2})\.(?:(?:srt)|(?:vtt))/) //example: Sintel.de.srt
+                    ?.groups?.lang,
+            }))
+        subtitles.map((s) => {
+            TVXVideoPlugin.executeAction(
+                `player:commit:message:addTrack:${encodeURIComponent(s.url)}:${
+                    s.language
+                }`
+            )
+        })
     }
 }
 

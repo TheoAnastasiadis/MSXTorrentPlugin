@@ -2,6 +2,11 @@ body {
     margin: 0;
     background-color: black;
     overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 #video {

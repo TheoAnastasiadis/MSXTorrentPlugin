@@ -9,7 +9,8 @@
         "build": "webpack",
         "prebuild": "npx prettier --write .",
         "auto-build": "nodemon -w ./src --exec \"npm run build\"",
-        "serve": "http-server ./dist -p 8080 --cors -S -C cert.pem"
+        "serve-secure": "http-server ./dist -p 8080 --cors -S -C cert.pem",
+        "serve-insecure": "http-server ./dist -p 8080 --cors"
     },
     "keywords": [
         "torrent",
@@ -38,6 +39,8 @@
         "m3u-parser-generator": "^1.2.0",
         "range-parser": "^1.2.1",
         "service-worker-webpack": "^0.0.11",
+        "srt-webvtt": "^2.0.0",
+        "vtt-live-edit": "^1.0.7",
         "webtorrent": "^2.0.16"
     }
 }

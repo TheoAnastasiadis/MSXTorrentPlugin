@@ -1,6 +1,12 @@
+import vtt from "vtt-live-edit"
 import { TorrentPlayer as LocalPlayer } from "./scripts/torrent.js"
 import { TorrServer as RemotePlayer } from "./scripts/torrServer.js"
-import { optionsPanel, updateInput } from "./scripts/optionsPanel.js"
+import {
+    optionsPanel,
+    torrentPanel,
+    updateInput,
+} from "./scripts/optionsPanel.js"
+import { Subtitle, subTitlePanel } from "./scripts/subtitles.js"
 
 const PROPERTY_PREFIX = "torrent:"
 
@@ -26,13 +32,15 @@ class Player {
             (this.serverLocationInput = ""),
             (this.torrentId = null),
             (this.fileIdx = 0),
+            (this.subTracks = []),
             (this.player = null),
             (this.init = () => {
                 //placeholder
             })
-        this.playLocaly = () => {
+        this.playLocaly = async () => {
             this.player = new LocalPlayer(this.torrentId, this.fileIdx)
-            this.player.streamTorrent(this.videoElement)
+            this.videoElement.src = "" //
+            await this.player.streamTorrent(this.videoElement)
         }
         this.playRemotely = async () => {
             console.log("Setting remote player")
@@ -53,9 +61,11 @@ class Player {
                 success(
                     `TorrServer ${
                         this.serverLocation == "auto" ? "found" : "available"
-                    } at ${this.player.url}`
+                    } at ${this.player.url}`,
+                    TVXVideoPlugin.executeAction("player:show")
                 )
-                this.player.streamTorrent(
+                this.videoElement.src = ""
+                await this.player.streamTorrent(
                     this.torrentId,
                     this.fileIdx,
                     this.videoElement
@@ -71,6 +81,10 @@ class Player {
                     }
                 )
             }
+        }
+        this.addSubTrack = (subtitle) => {
+            this.subTracks.push(subtitle)
+            this.videoElement.append(subtitle.trackHTML())
         }
         this.ready = () => {
             //Player is ready
@@ -105,6 +119,18 @@ class Player {
                     )
                 }
 
+                //External subtitles
+                for (const track of Object.keys(info.properties).filter(
+                    (s) => s.indexOf("torrent:subtitle:") == 0
+                )) {
+                    const subtitle = new Subtitle(
+                        info.properties[track],
+                        track.split(":")[2],
+                        false
+                    )
+                    this.addSubTrack(subtitle)
+                }
+
                 //Local webtorrent setup
                 const torrServerPreferable = TVXPropertyTools.getBool(
                     info,
@@ -123,15 +149,21 @@ class Player {
                 this.serverLocationInput = serverLocation
 
                 //Play torrent
-                if (torrServerPreferable) this.playRemotely()
-                else if (clientCompatible) this.playLocaly()
+                if (torrServerPreferable)
+                    this.playRemotely().then(TVXVideoPlugin.startPlayback)
+                //staring the playback will result in intercepting the .play() promise with a load event
+                else if (clientCompatible)
+                    this.playLocaly().then(TVXVideoPlugin.startPlayback)
                 else
                     error(
                         "Your system does not support WebTorrent. Will try to connect to a TorrServer as fallback.",
-                        this.playRemotely
+                        () => {
+                            this.playRemotely().then(
+                                TVXVideoPlugin.startPlayback
+                            )
+                        }
                     )
             })
-            TVXVideoPlugin.startPlayback()
         }
         this.play = () => this.videoElement.play()
         this.pause = () => this.videoElement.pause()
@@ -161,8 +193,9 @@ class Player {
         this.handleEvent = function (data) {
             //placeholder
         }
-        this.handleData = (data) => {
+        this.handleData = async (data) => {
             if (data?.message.indexOf("input:") == 0) {
+                //TorrServer location input change
                 this.serverLocationInput = updateInput(
                     //update state
                     this.serverLocationInput,
@@ -174,14 +207,44 @@ class Player {
                     { label: this.serverLocationInput }
                 )
             } else if (data?.message == "serverLocationChange") {
+                //TorrServer location input submit
                 this.serverLocation = this.serverLocationInput
                 this.playRemotely()
-            }
+            } else if (data?.message.indexOf("addTrack:") == 0) {
+                //Embeded tracks found
+                const url = data.message.split(":")[1]
+                const language = data.message.split(":")[2]
+                const subtitle = new Subtitle(
+                    decodeURIComponent(url),
+                    language,
+                    true
+                ) //all subtites added after initialization are embeded
+                this.addSubTrack(subtitle)
+            } else if (data?.message.indexOf("setTrack:") == 0) {
+                //Track chanegd
+                const selectedTrack = this.subTracks.find(
+                    (s) =>
+                        s.url == decodeURIComponent(data.message.split(":")[1])
+                )
+                await selectedTrack.setActive()
+            } else if (data?.message.indexOf("timing:") == 0) {
+                if (data.message.split(":")[1] == "plus") {
+                    vtt.addOffset("video", 0.1)
+                    success("Subtitles delayed by 100ms")
+                } else {
+                    vtt.removeOffset("video", 0.1)
+                    success("Subtitles hasten by 100ms")
+                }
+            } else error(`Unkown message ${data?.message}`)
         }
         this.handleRequest = (dataId, data, callback) => {
             if (dataId == "options")
                 callback(optionsPanel(this.serverLocationInput))
-            //TODO: subtitles
+            else if (dataId == "torrent")
+                callback(torrentPanel(this.serverLocationInput))
+            else if (dataId == "subtitles")
+                callback(subTitlePanel(this.subTracks)) //TODO: subtitles
+            else error(`Unkown request "${dataId}"`, callback)
         }
     }
 }

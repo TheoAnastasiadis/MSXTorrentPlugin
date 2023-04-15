@@ -4,40 +4,41 @@
     "template": {       
         "type": "separate",
         "layout": "0,0,2,4",
-        "icon": "msx-white-soft:extension",
         "color": "msx-glass",        
         "playerLabel": "Sintel © copyright Blender Foundation | durian.blender.org",
         "action": "video:plugin:http://192.168.1.8:8080",
         "properties": {
             "torrent:id":"{context:torrentId}",
-            "torrent:fileIdx":2,
+            "torrent:fileIdx":"{context:fileIdx}",
             "torrent:server:precedence":true,
-            "torrent:server:location":"auto",
-            "resume:position": "4",
-            "button:content:icon": "subtitles",
-            "button:content:action": "panel:request:player:options",
-            "html5x:subtitle:en:English": "http://msx.benzac.de/media/sintel/en.vtt",
-            "html5x:subtitle:de:Deutsch": "http://msx.benzac.de/media/sintel/de.vtt",			
-            "html5x:subtitle:es:Español": "http://msx.benzac.de/media/sintel/es.vtt",
-            "html5x:subtitle:fr:Français": "http://msx.benzac.de/media/sintel/fr.vtt",
-            "html5x:subtitle:it:Italiano": "http://msx.benzac.de/media/sintel/it.vtt",
-            "html5x:subtitle:nl:Nederlands": "http://msx.benzac.de/media/sintel/nl.vtt",
-            "html5x:subtitle:pl:Język polski": "http://msx.benzac.de/media/sintel/pl.vtt",
-            "html5x:subtitle:pt:Português": "http://msx.benzac.de/media/sintel/pt.vtt",
-            "html5x:subtitle:ru:Pусский": "http://msx.benzac.de/media/sintel/ru.vtt"			
+            "torrent:server:location":"192.168.1.8",
+            "torrent:subtitle:en": "{context:englishSubs}",
+            "resume:position": "0",
+            "button:content:icon": "settings",
+            "button:content:action": "panel:request:player:options"	
         }
     },
     "items": [{     
-            "title": "Sintel 1",
-            "titleFooter": "Audio & Subtitles",
-            "torrentId": "dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c"
+            "title": "Sintel",
+            "titleFooter":"2010",
+            "image": "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/2hwMOwcyyYWlHBldhonipg09kRm.jpg",
+            "badge": "infoHash",
+            "torrentId": "08ada5a7a6183aae1e09d831df6748d566095a10",
+            "fileIdx": "6",
+            "englishSubs" : "http://msx.benzac.de/media/sintel/en.vtt"
         }, {         
-            "title": "Sintel 2",
-            "titleFooter": "Audio only",
-            "torrentId": "dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c"
+            "title": "Big Buck Bunny",
+            "titleFooter":"2008",
+            "image": "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/i9jJzvoXET4D9pOkoEwncSdNNER.jpg",
+            "badge": "magnetLink",
+            "torrentId": "magnet:?xt=urn:btih:dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c&dn=Big+Buck+Bunny&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fbig-buck-bunny.torrent",
+            "fileIdx": "2"
         }, {    
-            "title": "Sintel 3",
-            "titleFooter": "Subtitles only",
-            "torrentId": "dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c"
+            "title": "Cosmos Laundromat",
+            "titleFooter":"2015",
+            "image": "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/5ZXi0oitpEgAdoJglFTc5SZF9nt.jpg",
+            "badge": ".torrent file",
+            "torrentId": "https://webtorrent.io/torrents/cosmos-laundromat.torrent",
+            "fileIdx": "4"
         }]
 }
