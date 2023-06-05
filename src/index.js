@@ -62,7 +62,7 @@ class Player {
                     `TorrServer ${
                         this.serverLocation == "auto" ? "found" : "available"
                     } at ${this.player.url}`,
-                    TVXVideoPlugin.executeAction("player:show")
+                    () => TVXVideoPlugin.executeAction("player:show")
                 )
                 this.videoElement.src = ""
                 await this.player.streamTorrent(
