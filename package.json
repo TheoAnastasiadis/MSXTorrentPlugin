@@ -1,0 +1,46 @@
+{
+    "name": "msxtorrentplugin",
+    "version": "1.0.0",
+    "description": "MSX plugin to play torrent videos",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "build": "webpack",
+        "prebuild": "npx prettier --write .",
+        "auto-build": "nodemon -w ./src --exec \"npm run build\"",
+        "serve-secure": "http-server ./dist -p 8080 --cors -S -C cert.pem",
+        "serve-insecure": "http-server ./dist -p 8080 --cors"
+    },
+    "keywords": [
+        "torrent",
+        "MSX",
+        "smartTV",
+        "webTorrent"
+    ],
+    "author": "Teo Anastasiadis <theoanastasiadis98@gmail.com>",
+    "license": "MIT",
+    "devDependencies": {
+        "@babel/core": "^7.21.3",
+        "@babel/preset-env": "^7.20.2",
+        "babel-loader": "^9.1.2",
+        "copy-webpack-plugin": "^11.0.0",
+        "css-loader": "^6.7.3",
+        "http-server": "^14.1.1",
+        "mini-css-extract-plugin": "^2.7.5",
+        "prettier": "2.8.7",
+        "style-loader": "^3.3.2",
+        "webpack": "^5.76.3",
+        "webpack-cli": "^5.0.1",
+        "workbox-webpack-plugin": "^6.5.4"
+    },
+    "dependencies": {
+        "lodash": "^4.17.21",
+        "m3u-parser-generator": "^1.2.0",
+        "range-parser": "^1.2.1",
+        "service-worker-webpack": "^0.0.11",
+        "srt-webvtt": "^2.0.0",
+        "vtt-live-edit": "^1.0.7",
+        "webtorrent": "^2.0.16"
+    }
+}
