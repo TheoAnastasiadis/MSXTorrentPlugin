@@ -32,6 +32,7 @@ class Player {
             (this.serverLocationInput = ""),
             (this.torrentId = null),
             (this.fileIdx = 0),
+            (this.fallbackUrl = null),
             (this.subTracks = []),
             (this.player = null),
             (this.init = () => {
@@ -82,6 +83,9 @@ class Player {
                 )
             }
         }
+        this.playFallback = (url) => {
+            this.videoElement.src = url
+        }
         this.addSubTrack = (subtitle) => {
             this.subTracks.push(subtitle)
             this.videoElement.append(subtitle.trackHTML())
@@ -91,6 +95,7 @@ class Player {
             TVXVideoPlugin.requestData("video:info", (data) => {
                 const info = data?.video?.info
                 //Content information
+                //torrent id
                 this.torrentId =
                     TVXPropertyTools.getFullStr(
                         info,
@@ -101,7 +106,7 @@ class Player {
                         "torrent",
                         null
                     )
-
+                //file id
                 this.fileIdx =
                     TVXPropertyTools.getNum(
                         info,
@@ -110,7 +115,19 @@ class Player {
                     ) ||
                     new TVXUrlParams(window.location.href).getNum("fileIdx", 0)
 
-                if (!this.torrentId) {
+                //fallback setting
+                this.fallbackUrl =
+                    TVXPropertyTools.getFullStr(
+                        info,
+                        PROPERTY_PREFIX + "fallbackUrl",
+                        null
+                    ) ||
+                    new TVXUrlParams(window.location.href).getFullStr(
+                        "fallbackUrl",
+                        null
+                    )
+
+                if (!this.torrentId && !this.fallbackUrl) {
                     error(
                         "Error: No torrent id (infoHash, magnerURI or .torrent file) specified.",
                         () => {
@@ -118,6 +135,11 @@ class Player {
                         }
                     )
                 }
+                const skipToFallback = !this.torrentId && !!this.fallbackUrl
+                if (skipToFallback)
+                    console.warn(
+                        `No torrent id set; will skip to fallback ${this.fallbackUrl}`
+                    )
 
                 //External subtitles
                 for (const track of Object.keys(info.properties).filter(
@@ -149,12 +171,15 @@ class Player {
                 this.serverLocationInput = serverLocation
 
                 //Play torrent
-                if (torrServerPreferable)
+                if (torrServerPreferable && !skipToFallback)
                     this.playRemotely().then(TVXVideoPlugin.startPlayback)
                 //staring the playback will result in intercepting the .play() promise with a load event
-                else if (clientCompatible)
+                else if (clientCompatible && !skipToFallback)
                     this.playLocaly().then(TVXVideoPlugin.startPlayback)
-                else
+                else if (!!this.fallbackUrl) {
+                    this.playFallback(this.fallbackUrl) //this is sync
+                    TVXVideoPlugin.startPlayback()
+                } else
                     error(
                         "Your system does not support WebTorrent. Will try to connect to a TorrServer as fallback.",
                         () => {
@@ -238,8 +263,7 @@ class Player {
             } else error(`Unkown message ${data?.message}`)
         }
         this.handleRequest = (dataId, data, callback) => {
-            if (dataId == "options")
-                callback(optionsPanel(this.serverLocationInput))
+            if (dataId == "options") callback(optionsPanel(!!this.fallbackUrl))
             else if (dataId == "torrent")
                 callback(torrentPanel(this.serverLocationInput))
             else if (dataId == "subtitles")

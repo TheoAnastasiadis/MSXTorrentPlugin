@@ -10,7 +10,7 @@
         "properties": {
             "torrent:id":"{context:torrentId}",
             "torrent:fileIdx":"{context:fileIdx}",
-            "torrent:server:precedence":true,
+            "torrent:server:precedence":false,
             "torrent:server:location":"192.168.56.1",
             "torrent:subtitle:en": "{context:englishSubs}",
             "resume:position": "0",

@@ -103,7 +103,7 @@ const updateInput = (input, key) => {
     else return input //remain unchanged
 }
 
-const optionsPanel = () => {
+const optionsPanel = (isFallbackSet = false) => {
     return {
         cache: false,
         reuse: false,
@@ -169,6 +169,7 @@ const optionsPanel = () => {
                         type: "control",
                         layout: "0,5,8,1",
                         extensionIcon: "account-tree",
+                        enable: !isFallbackSet, //If fallback video is set, then connection to TorrServer will not be ettempted.
                     },
                 ],
             },
