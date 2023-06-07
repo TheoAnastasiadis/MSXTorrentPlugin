@@ -6,7 +6,7 @@
         "layout": "0,0,2,4",
         "color": "msx-glass",        
         "playerLabel": "Sintel © copyright Blender Foundation | durian.blender.org",
-        "action": "video:plugin:http://192.168.56.1:8080",
+        "action": "video:plugin:https://htmlpreview.github.io/?https://raw.githubusercontent.com/TheoAnastasiadis/MSXTorrentPlugin/main/dist/index.html",
         "properties": {
             "torrent:id":"{context:torrentId}",
             "torrent:fileIdx":"{context:fileIdx}",
