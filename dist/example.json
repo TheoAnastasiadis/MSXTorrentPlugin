@@ -1,0 +1,44 @@
+{
+    "type": "pages",
+    "headline": "Torrent Plugin Test",    
+    "template": {       
+        "type": "separate",
+        "layout": "0,0,2,4",
+        "color": "msx-glass",        
+        "playerLabel": "Sintel © copyright Blender Foundation | durian.blender.org",
+        "action": "video:plugin:https://192.168.56.1:8080/",
+        "properties": {
+            "torrent:id":"{context:torrentId}",
+            "torrent:fileIdx":"{context:fileIdx}",
+            "torrent:server:precedence":false,
+            "torrent:server:location":"192.168.56.1",
+            "torrent:subtitle:en": "{context:englishSubs}",
+            "resume:position": "0",
+            "button:content:icon": "settings",
+            "button:content:action": "panel:request:player:options"	
+        }
+    },
+    "items": [{     
+            "title": "Sintel",
+            "titleFooter":"2010",
+            "image": "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/2hwMOwcyyYWlHBldhonipg09kRm.jpg",
+            "badge": "infoHash",
+            "torrentId": "08ada5a7a6183aae1e09d831df6748d566095a10",
+            "fileIdx": "6",
+            "englishSubs" : "http://msx.benzac.de/media/sintel/en.vtt"
+        }, {         
+            "title": "Big Buck Bunny",
+            "titleFooter":"2008",
+            "image": "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/i9jJzvoXET4D9pOkoEwncSdNNER.jpg",
+            "badge": "magnetLink",
+            "torrentId": "magnet:?xt=urn:btih:dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c&dn=Big+Buck+Bunny&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F&xs=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2Fbig-buck-bunny.torrent",
+            "fileIdx": "1"
+        }, {    
+            "title": "Cosmos Laundromat",
+            "titleFooter":"2015",
+            "image": "https://www.themoviedb.org/t/p/w600_and_h900_bestv2/5ZXi0oitpEgAdoJglFTc5SZF9nt.jpg",
+            "badge": ".torrent file",
+            "torrentId": "https://webtorrent.io/torrents/cosmos-laundromat.torrent",
+            "fileIdx": "4"
+        }]
+}
