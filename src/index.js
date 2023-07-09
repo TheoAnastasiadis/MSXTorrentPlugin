@@ -1,6 +1,7 @@
 import vtt from "vtt-live-edit"
 import { TorrentPlayer as LocalPlayer } from "./scripts/torrent.js"
 import { TorrServer as RemotePlayer } from "./scripts/torrServer.js"
+import { DashPlayer } from "./scripts/dashPlayer.js"
 import {
     optionsPanel,
     torrentPanel,
@@ -84,7 +85,8 @@ class Player {
             }
         }
         this.playFallback = (url) => {
-            this.videoElement.src = url
+            this.player = new DashPlayer()
+            this.player.play(url, this.videoElement)
         }
         this.addSubTrack = (subtitle) => {
             this.subTracks.push(subtitle)
@@ -204,7 +206,8 @@ class Player {
             this.videoElement.playbackRate = speed
         }
         this.setPosition = (position) => {
-            this.videoElement.currentTime = position
+            if (this.player instanceof DashPlayer) this.player.seekTo(position)
+            else this.videoElement.currentTime = position
         }
         this.isMuted = () => this.videoElement.muted
         this.setMuted = () => {
