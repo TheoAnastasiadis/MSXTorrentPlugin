@@ -8,6 +8,7 @@ import {
     updateInput,
 } from "./scripts/optionsPanel.js"
 import { Subtitle, subTitlePanel } from "./scripts/subtitles.js"
+import { HlsPlayer } from "./scripts/hlsPlayer.js"
 
 const PROPERTY_PREFIX = "torrent:"
 
@@ -37,7 +38,9 @@ class Player {
             (this.subTracks = []),
             (this.player = null),
             (this.init = () => {
-                //placeholder
+                this.videoElement.onerror = function (e) {
+                    error(JSON.stringify(e))
+                }
             })
         this.playLocaly = async () => {
             this.player = new LocalPlayer(this.torrentId, this.fileIdx)
@@ -84,13 +87,25 @@ class Player {
                 )
             }
         }
+        /**
+         * Stream a regular .mp4, .mpd or .m3u8 file
+         *
+         * @param {string} url
+         */
         this.playFallback = (url) => {
-            this.player = new DashPlayer()
-            this.player.play(url, this.videoElement)
+            if (url.endsWith(".mpd")) {
+                this.player = new DashPlayer()
+                this.player.play(url, this.videoElement)
+            } else if (url.endsWith(".m3u8")) {
+                this.player = new HlsPlayer()
+                this.player.play(url, this.videoElement)
+            } else {
+                this.videoElement.src = url
+            }
         }
         this.addSubTrack = (subtitle) => {
             this.subTracks.push(subtitle)
-            this.videoElement.append(subtitle.trackHTML())
+            this.videoElement.appendChild(subtitle.trackHTML())
         }
         this.ready = () => {
             //Player is ready
@@ -108,6 +123,8 @@ class Player {
                         "torrent",
                         null
                     )
+                document.getElementById("label").innerText =
+                    "torrent id " + this.torrentId
                 //file id
                 this.fileIdx =
                     TVXPropertyTools.getNum(
@@ -116,6 +133,8 @@ class Player {
                         null
                     ) ||
                     new TVXUrlParams(window.location.href).getNum("fileIdx", 0)
+                document.getElementById("label").innerText =
+                    "file idx " + this.fileIdx
 
                 //fallback setting
                 this.fallbackUrl =
@@ -128,6 +147,8 @@ class Player {
                         "fallbackUrl",
                         null
                     )
+                document.getElementById("label").innerText =
+                    "fallback url " + this.fallbackUrl
 
                 if (!this.torrentId && !this.fallbackUrl) {
                     error(
@@ -138,6 +159,8 @@ class Player {
                     )
                 }
                 const skipToFallback = !this.torrentId && !!this.fallbackUrl
+                document.getElementById("label").innerText =
+                    "skip to fallback " + skipToFallback
                 if (skipToFallback)
                     console.warn(
                         `No torrent id set; will skip to fallback ${this.fallbackUrl}`
@@ -154,6 +177,8 @@ class Player {
                     )
                     this.addSubTrack(subtitle)
                 }
+                document.getElementById("label").innerText =
+                    "subtracks " + this.subTracks.length
 
                 //Local webtorrent setup
                 const torrServerPreferable = TVXPropertyTools.getBool(
@@ -161,8 +186,11 @@ class Player {
                     PROPERTY_PREFIX + "server:precedence",
                     false
                 )
+                document.getElementById("label").innerText =
+                    "torr server preferebale " + torrServerPreferable
                 const clientCompatible = LocalPlayer.IS_CLIENT_COMPATIBLE()
-
+                document.getElementById("label").innerText =
+                    "client compatible " + clientCompatible
                 //Remote TorrServer setup
                 const serverLocation = TVXPropertyTools.getFullStr(
                     info,
@@ -173,12 +201,18 @@ class Player {
                 this.serverLocationInput = serverLocation
 
                 //Play torrent
-                if (torrServerPreferable && !skipToFallback)
+                if (torrServerPreferable && !skipToFallback) {
+                    document.getElementById("label").innerText =
+                        "play remotely "
                     this.playRemotely().then(TVXVideoPlugin.startPlayback)
+                }
                 //staring the playback will result in intercepting the .play() promise with a load event
-                else if (clientCompatible && !skipToFallback)
+                else if (clientCompatible && !skipToFallback) {
+                    document.getElementById("label").innerText = "play locally "
                     this.playLocaly().then(TVXVideoPlugin.startPlayback)
-                else if (!!this.fallbackUrl) {
+                } else if (!!this.fallbackUrl) {
+                    document.getElementById("label").innerText =
+                        "play fallback "
                     this.playFallback(this.fallbackUrl) //this is sync
                     TVXVideoPlugin.startPlayback()
                 } else
@@ -277,6 +311,7 @@ class Player {
 }
 
 TVXPluginTools.onReady(function () {
+    document.getElementById("label").innerText = "Ready Fired! -- 4"
     TVXVideoPlugin.setupPlayer(new Player())
     TVXVideoPlugin.init()
 })

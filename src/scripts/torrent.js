@@ -35,7 +35,7 @@ class TorrentPlayer {
     }
 
     static IS_CLIENT_COMPATIBLE = () => {
-        return WebTorrent.WEBRTC_SUPPORT && !!navigator.serviceWorker
+        return window?.WebTorrent?.WEBRTC_SUPPORT && !!navigator.serviceWorker
     }
 }
 

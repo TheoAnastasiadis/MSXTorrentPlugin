@@ -4,12 +4,15 @@
     <meta charset="utf-8" />
     <title>MSX Torrent plugin</title>
     <link rel="stylesheet" href="main.css">
-    <script type="text/javascript" src="//msx.benzac.de/js/tvx-plugin.min.js"></script>
+    <script type="text/javascript" src="lib/tvx-plugin.min.js?v=0.0.70"></script>
   </head>
   <body>
-    <script src="//cdn.jsdelivr.net/npm/webtorrent@1.9.0/webtorrent.min.js"></script>
-    <video id="video"></video>
-    <script src="https://cdn.dashjs.org/v3.1.0/dash.all.min.js"></script>
+    <script src="lib/webtorrent.min.js?v=1.9.0"></script>
+    <script src="lib/hls.js?v=1.4.8"></script>
+    <h1 id = "label" style="color:white"></h1>
+    <video id="video">
+    </video>
+    <script src="lib/dash.all.min.js?v=3.1.0"></script>
     <script src="main.js"></script>
   </body>
 </html>
