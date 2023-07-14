@@ -167,9 +167,17 @@ const optionsPanel = (isFallbackSet = false) => {
                         text: "Configure how torrents should be streamed.",
                         action: `panel:request:player:torrent`,
                         type: "control",
-                        layout: "0,5,8,1",
+                        layout: "0,5,7,1",
                         extensionIcon: "account-tree",
                         enable: !isFallbackSet, //If fallback video is set, then connection to TorrServer will not be ettempted.
+                    },
+                    {
+                        id: "debug",
+                        label: "Debug",
+                        icon: "fact-check",
+                        action: `[event:toggle_debug|player:show]`,
+                        type: "control",
+                        layout: "7,5,1,1",
                     },
                 ],
             },
