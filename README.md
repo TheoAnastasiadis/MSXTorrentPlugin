@@ -111,11 +111,13 @@ Then open http://msx.benzac.de/?start=content:http://[your.localhost.address]/ex
 | `torrent:server:location`   | Set as either the private IPv4 address of the TorrServer or `auto`.                                      |
 | `torrent:subtitle:ln`       | Add .srt files to be rendered as subtitles.                                                              |
 | `resume:position`           | Skip a part of the video. Check [MSX documentation](https://msx.benzac.de/wiki/index.php?title=Welcome). |
-| `torrent:fallbackUrl`       | Optional `.mpd`` video url to be played in case both the TorrServer and Webtorrent players fail.\*\*     |
+| `torrent:fallbackUrl`       | Optional video url\*\* to be played in case both the TorrServer and Webtorrent players fail.\*\*\*       |
 
 \*If a torrent id is not supplied to the player, then this video will be played directly.
 
-\*\*If `torrent:server:precedence` is set to `true` then the this video will be played after the server fails.
+\*\*Valid formats are `.mp4`, `.webp`, `.mpd` and `.m3u8`
+
+\*\*\*If `torrent:server:precedence` is set to `true` then the this video will be played after the server fails.
 
 ## Limitations
 
