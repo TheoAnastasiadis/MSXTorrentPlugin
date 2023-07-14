@@ -27,6 +27,13 @@ const warning = (message, cb) => {
     cb && cb()
 }
 
+const logsDiv = document.getElementById("logsDiv")
+const debugLog = (text) => {
+    const child = document.createElement("p")
+    child.innerText = text
+    logsDiv.appendChild(child)
+}
+
 class Player {
     constructor() {
         this.videoElement = document.getElementById("video")
@@ -48,8 +55,7 @@ class Player {
             await this.player.streamTorrent(this.videoElement)
         }
         this.playRemotely = async () => {
-            console.log("Setting remote player")
-
+            debugLog(`TorrServer provided location: ${this.serverLocation}`)
             this.player = new RemotePlayer(
                 this.serverLocation == "auto" ? null : this.serverLocation
             )
@@ -93,6 +99,15 @@ class Player {
          * @param {string} url
          */
         this.playFallback = (url) => {
+            debugLog(`Playing fallback url ${url}`)
+            if (this.rdPingUrl)
+                setInterval(
+                    () =>
+                        fetch(this.rdPingUrl + Math.floor(this.getPosition()), {
+                            mode: "no-cors",
+                        }),
+                    10000
+                ) //ping rd every 10s
             if (url.endsWith(".mpd")) {
                 this.player = new DashPlayer()
                 this.player.play(url, this.videoElement)
@@ -123,8 +138,8 @@ class Player {
                         "torrent",
                         null
                     )
-                document.getElementById("label").innerText =
-                    "torrent id " + this.torrentId
+                if (this.torrentId?.startsWith("{")) this.torrentId = null // prevents torrent id from being assigne {context: torrentId}
+                debugLog(`Torrent id: ${this.torrentId}`)
                 //file id
                 this.fileIdx =
                     TVXPropertyTools.getNum(
@@ -133,8 +148,7 @@ class Player {
                         null
                     ) ||
                     new TVXUrlParams(window.location.href).getNum("fileIdx", 0)
-                document.getElementById("label").innerText =
-                    "file idx " + this.fileIdx
+                debugLog(`File id: ${this.fileIdx}`)
 
                 //fallback setting
                 this.fallbackUrl =
@@ -147,8 +161,18 @@ class Player {
                         "fallbackUrl",
                         null
                     )
-                document.getElementById("label").innerText =
-                    "fallback url " + this.fallbackUrl
+                debugLog(`Fallback URL: ${this.fallbackUrl}`)
+
+                this.rdPingUrl =
+                    TVXPropertyTools.getFullStr(
+                        info,
+                        PROPERTY_PREFIX + "rdPingUrl",
+                        null
+                    ) ||
+                    new TVXUrlParams(window.location.href).getFullStr(
+                        "rdPingUrl",
+                        null
+                    )
 
                 if (!this.torrentId && !this.fallbackUrl) {
                     error(
@@ -159,8 +183,7 @@ class Player {
                     )
                 }
                 const skipToFallback = !this.torrentId && !!this.fallbackUrl
-                document.getElementById("label").innerText =
-                    "skip to fallback " + skipToFallback
+                debugLog(`Skip to fallback ${skipToFallback}`)
                 if (skipToFallback)
                     console.warn(
                         `No torrent id set; will skip to fallback ${this.fallbackUrl}`
@@ -177,8 +200,9 @@ class Player {
                     )
                     this.addSubTrack(subtitle)
                 }
-                document.getElementById("label").innerText =
-                    "subtracks " + this.subTracks.length
+                debugLog(
+                    `Player provided with ${this.subTracks.length} subtracks`
+                )
 
                 //Local webtorrent setup
                 const torrServerPreferable = TVXPropertyTools.getBool(
@@ -186,11 +210,11 @@ class Player {
                     PROPERTY_PREFIX + "server:precedence",
                     false
                 )
-                document.getElementById("label").innerText =
-                    "torr server preferebale " + torrServerPreferable
+                debugLog(`TorrServer preferable: ${torrServerPreferable}`)
                 const clientCompatible = LocalPlayer.IS_CLIENT_COMPATIBLE()
-                document.getElementById("label").innerText =
-                    "client compatible " + clientCompatible
+                debugLog(
+                    `Client compatible with WebTorrent: ${clientCompatible}`
+                )
                 //Remote TorrServer setup
                 const serverLocation = TVXPropertyTools.getFullStr(
                     info,
@@ -202,17 +226,15 @@ class Player {
 
                 //Play torrent
                 if (torrServerPreferable && !skipToFallback) {
-                    document.getElementById("label").innerText =
-                        "play remotely "
+                    debugLog(`Playing from TorrServer.`)
                     this.playRemotely().then(TVXVideoPlugin.startPlayback)
                 }
                 //staring the playback will result in intercepting the .play() promise with a load event
                 else if (clientCompatible && !skipToFallback) {
-                    document.getElementById("label").innerText = "play locally "
+                    debugLog(`Playing from WebTorrent`)
                     this.playLocaly().then(TVXVideoPlugin.startPlayback)
                 } else if (!!this.fallbackUrl) {
-                    document.getElementById("label").innerText =
-                        "play fallback "
+                    debugLog(`Playing fallback`)
                     this.playFallback(this.fallbackUrl) //this is sync
                     TVXVideoPlugin.startPlayback()
                 } else
@@ -226,8 +248,16 @@ class Player {
                     )
             })
         }
-        this.play = () => this.videoElement.play()
-        this.pause = () => this.videoElement.pause()
+        this.play = () => {
+            this.videoElement.play()
+            if (this.rdPingUrl)
+                fetch(this.rdPingUrl + "play", { mode: "no-cors" }) //rd specific functionality
+        }
+        this.pause = () => {
+            this.videoElement.pause()
+            if (this.rdPingUrl)
+                fetch(this.rdPingUrl + "pause", { mode: "no-cors" }) //rd specific functionality
+        }
         this.stop = () => {
             this.videoElement.pause()
             TVXVideoPlugin.stopPlayback()
@@ -242,6 +272,11 @@ class Player {
         this.setPosition = (position) => {
             if (this.player instanceof DashPlayer) this.player.seekTo(position)
             else this.videoElement.currentTime = position
+            if (this.rdPingUrl)
+                fetch(
+                    this.fallbackUrl + "?t=" + Math.floor(this.getPosition()),
+                    { mode: "no-cors" }
+                ) //rd specific functionality
         }
         this.isMuted = () => this.videoElement.muted
         this.setMuted = () => {
@@ -253,7 +288,10 @@ class Player {
             speed: this.getSpeed(),
         })
         this.handleEvent = function (data) {
-            //placeholder
+            if (data.event == "custom:toggle_debug")
+                logsDiv.style.opacity == 0
+                    ? (logsDiv.style.opacity = 1)
+                    : (logsDiv.style.opacity = 0)
         }
         this.handleData = async (data) => {
             if (data?.message.indexOf("input:") == 0) {
@@ -311,7 +349,7 @@ class Player {
 }
 
 TVXPluginTools.onReady(function () {
-    document.getElementById("label").innerText = "Ready Fired! -- 4"
+    debugLog(`Init fired`)
     TVXVideoPlugin.setupPlayer(new Player())
     TVXVideoPlugin.init()
 })
